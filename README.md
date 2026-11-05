@@ -2,7 +2,8 @@
 
 Formulario móvil para que el líder de un proyecto edite la ficha de su
 proyecto sin recibir `moodle/course:update` y sin pasar por
-`course/edit.php`. No modifica el núcleo de Moodle ni el tema.
+`course/edit.php`, y norma de un solo líder por proyecto. No modifica el
+núcleo de Moodle ni el tema.
 
 ## Qué hace
 
@@ -30,10 +31,47 @@ proyecto sin recibir `moodle/course:update` y sin pasar por
 - Añade «Editar mi proyecto» al menú del curso (en Boost, «Más») a quien
   tenga la capacidad.
 
-## Capacidad
+## Un líder por proyecto (DC-02)
 
-`local/manaselabproject:editproject` (contexto de curso, `RISK_PERSONAL`,
-sin arquetipos). Se asigna por configuración al rol `projectlead` y a Gestor.
+Un proyecto tiene un solo líder a la vez, y un líder no puede liderar otro
+proyecto hasta que el primero haya finalizado.
+
+- Un *observer* de `\core\eventole_assigned` (`classes/observer.php`)
+  comprueba cada asignación del rol de líder en un curso proyecto
+  (`classes/leadership.php`). Actúa **después** de guardarse la asignación:
+  no la impide, la **deshace** con `role_unassign()`. La persona sigue
+  matriculada, sin el rol.
+- Se deshace si (a) el curso ya tiene otra persona con el rol de líder, o
+  (b) la persona ya es líder de otro proyecto no finalizado.
+- Vale para cualquier vía que llame a `role_assign()`: *Participantes*,
+  matricular con rol, *Subir usuarios* (CSV) y restaurar un curso con
+  usuarios. Copiar la plantilla sin usuarios no asigna líderes.
+- Si la asignación la gestiona un plugin de matriculación (`component` no
+  vacío: cohortes, metacurso), no se deshace, porque la sincronización la
+  volvería a crear; solo se avisa.
+- **Aviso**: mensaje `leadconflict` a quien hizo la asignación y a quien
+  tenga `local/manaselabproject:receiveleadalerts` en el sistema.
+- **Traspaso**: primero quitar el rol al líder saliente y después darlo al
+  nuevo. En orden inverso se deshace.
+- Lo que entre por otras vías (cambiar `spacetype` o reabrir un proyecto con
+  líder) no pasa por el evento: lo detecta el informe de control del sitio.
+
+### Ajustes
+
+*Administración del sitio › Extensiones › Extensiones locales › Proyecto
+Manas E-Lab*:
+
+- `leadrole`: nombre corto del rol de líder (`projectlead`).
+- `finishedstatuses`: claves de `projectstatus` que dan un proyecto por
+  finalizado, separadas por comas (`closed,graduated`). Un proyecto sin
+  estado no ha finalizado.
+
+## Capacidades
+
+- `local/manaselabproject:editproject` (contexto de curso, `RISK_PERSONAL`,
+  sin arquetipos). Se asigna por configuración al rol `projectlead` y a Gestor.
+- `local/manaselabproject:receiveleadalerts` (contexto de sistema, arquetipo
+  gestor): recibir los avisos de la norma de un líder por proyecto.
 
 ## Requisitos
 

@@ -17,7 +17,7 @@
 /**
  * Capabilities of local_manaselabproject.
  *
- * The capability carries no archetype on purpose: the site gives it to the
+ * editproject carries no archetype on purpose: the site gives it to the
  * project lead role and to the manager by configuration.
  *
  * @package    local_manaselabproject
@@ -35,5 +35,14 @@ $capabilities = [
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
         'archetypes' => [],
+    ],
+
+    // Receive the alert when a lead role assignment breaks the rule of one lead.
+    'local/manaselabproject:receiveleadalerts' => [
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => [
+            'manager' => CAP_ALLOW,
+        ],
     ],
 ];
